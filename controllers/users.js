@@ -1,4 +1,5 @@
 const{request, response}=require('express')
+/**/const bcrypt = require('bcrypt');
 const usersModel = require('../models/users')
 const pool = require('../db');
 
@@ -70,7 +71,10 @@ const adduser = async (req = request, res=response) =>{
         res.status(400).json({msg:'Missing information'});
         return;
     }
-    const user = [ username,email,password, name,lastname,phone_number,role_id,id_active];
+   /**/ const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password,saltRounds);
+        /**/
+    const user = [ username,email,passwordHash, name,lastname,phone_number,role_id,id_active];
 
     let conn;
     try{
@@ -309,7 +313,45 @@ res.json({msg:'User updated successfully'})
         if (conn) conn.end();
     }
 }
+/*--------------------------------------------*/
+
+const signIn = async (req = request, res =response)=>{
+    let conn;
+    const{username, password}=req.body;
+    
+        if(!username||!password){
+            res.status(400).json({msg:"Username and password are requerid"});
+            return;
+        }
+        try{ 
+            conn = await pool.getConnection();
+        const [user]=await conn.query(
+            usersModel.getByUsername,
+            [username],
+            (err)=>{if(err)throw err;}
+        )
+        if(!user||user.id_active===0){
+            res.status(404).json({msg:'User not fount'})
+            return;
+        }
+
+        const passwordOk = bcrypt.compare(password, user.password);
+        if(!passwordOk ){
+            res.status(400).json({msg: 'Wrong username or password'});
+            return;
+        }
+        delete user.password;
+        delete user.created_at;
+        delete user.updated_at;
+    res.json(user);
+        }catch (error){
+            console.log(error);
+            res.status(500).json(error);
+        } finally {
+            if (conn) conn.end();
+        }
+    }
 
 
 
-module.exports={usersList, listUserByID, adduser,deleteUsers,UpdateUser}; 
+module.exports={usersList, listUserByID, adduser,deleteUsers,UpdateUser,signIn}; 

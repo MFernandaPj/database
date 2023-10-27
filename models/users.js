@@ -33,7 +33,7 @@ const usersModel = {
        
        getByUsername:`
        SELECT
-           id
+           *
        FROM
            Users
       WHERE 
@@ -71,24 +71,6 @@ const usersModel = {
       WHERE
          id=?
    `, 
-   /* 
-   updateRow:`
-       UPDATE
-    Users
-    SET
-          username = ?,
-      email = ?,
-      password = ?,
-      name = ?,
-      lastname = ?,
-      phone_number = ?,
-      role_id = ?,
-      id_active = ?
-    WHERE
-          id=?  
-    `
-   */
-
 
 };
 module.exports = usersModel;
